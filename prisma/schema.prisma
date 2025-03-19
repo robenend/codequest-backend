@@ -1,0 +1,115 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model UserRole {
+  id        String   @id @default(cuid())
+  roleName  String   @unique
+  // users     User[]
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+}
+
+model User {
+  id           String    @id @default(uuid())
+  email        String    @unique
+  password     String?
+  provider     String? // "google", "github", "local"
+  providerId   String?   @unique
+  isActive     Boolean   @default(true)
+  createdAt    DateTime  @default(now())
+  refreshToken String?
+  profile      Profile?
+  logs         Log[]
+  userRoom     UserRoom?
+  // role         UserRole @relation(fields: [roleId], references: [id])
+}
+
+model Profile {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  name      String?
+  profile   String?
+  points    Int      @default(0)
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Log {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  action    String
+  user      User     @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+}
+
+model Image {
+  id        String   @id @default(cuid())
+  filePath  String
+  createdAt DateTime @default(now())
+}
+
+model Category {
+  id          String       @id @default(cuid())
+  name        String
+  description String
+  challenges  Challanges[]
+  resources   Resources[]
+}
+
+model Challanges {
+  id          String   @id @default(cuid())
+  title       String
+  categoryId  String
+  description String
+  difficulty  String
+  points      Int
+  status      String
+  createdAt   DateTime @default(now())
+  category    Category @relation(fields: [categoryId], references: [id])
+  rooms       Rooms[]
+}
+
+model Rooms {
+  id          String     @id @default(cuid())
+  challengeId String
+  text        String
+  description String
+  hint        String
+  status      Boolean
+  createdAt   DateTime   @default(now())
+  challenges  Challanges @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+  user        UserRoom?
+}
+
+model UserRoom {
+  id        String  @id @default(cuid())
+  userId    String  @unique
+  roomId    String  @unique
+  completed Boolean @default(false)
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  room      Rooms   @relation(fields: [roomId], references: [id], onDelete: Cascade)
+}
+
+model Resources {
+  id          String   @id @default(cuid())
+  categoryId  String
+  type        String
+  description String
+  url         String
+  difficulty  String
+  icon        String
+  createdAt   DateTime @default(now())
+  category    Category @relation(fields: [categoryId], references: [id])
+}
